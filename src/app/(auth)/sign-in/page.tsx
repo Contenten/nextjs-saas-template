@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { signIn } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signUp } from "@/lib/auth-client";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/registry/new-york/ui/button";
 import { Input } from "@/registry/new-york/ui/input";
 import { LoadingDialog } from "../loading-dialog";
@@ -19,66 +19,59 @@ import {
   FormMessage,
 } from "@/registry/new-york/ui/form";
 
-const signupSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-type SignupForm = z.infer<typeof signupSchema>;
-
-export default function SignupPage() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+export default function LoginPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [signUpStatus, setSignUpStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginStatus, setLoginStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const form = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async ({ email, password }: SignupForm) => {
-    const { data, error } = await signUp.email(
-      {
-        email,
-        password,
-        name: email.split("@")[0]!,
-        callbackURL: "/dashboard",
-      },
-      {
-        onRequest: (ctx) => {
-          setIsLoading(true);
-          setError(null);
-          setIsDialogOpen(true);
-          setSignUpStatus("idle");
-        },
-        onSuccess: (ctx) => {
-          setIsLoading(false);
-          setSignUpStatus("success");
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    setIsLoading(true);
+    setError(null);
+    setIsDialogOpen(true);
+    setLoginStatus("idle");
+
+    try {
+      const response = await signIn.email({
+        email: data.email,
+        password: data.password,
+      });
+      if (response) {
+        setLoginStatus("success");
+        setTimeout(() => {
           // @ts-expect-error
           router.push("/dashboard");
           setIsDialogOpen(false);
-        },
-        onError: (ctx) => {
-          setIsLoading(false);
-          setIsDialogOpen(false);
-          setError(ctx.error.message);
-        },
-      },
-    );
+        }, 2000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password");
+      setIsLoading(false);
+      setTimeout(() => setIsDialogOpen(false), 2000);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md p-8 space-y-8 rounded-lg shadow-md border">
+      <div className="w-full max-w-md p-8 space-y-8 rounded-lg shadow-md border border">
         <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-          Sign Up
+          Sign In
         </h1>
         {error && <p className="text-red-500 text-center">{error}</p>}
 
@@ -95,6 +88,7 @@ export default function SignupPage() {
                       className="border-input"
                       type="email"
                       placeholder="you@example.com"
+                      disabled={isLoading}
                       {...field}
                     />
                   </FormControl>
@@ -113,6 +107,7 @@ export default function SignupPage() {
                       className="border-input"
                       type="password"
                       placeholder="********"
+                      disabled={isLoading}
                       {...field}
                     />
                   </FormControl>
@@ -120,20 +115,20 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Sign Up
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Sign In"}
             </Button>
           </form>
         </Form>
 
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Don’t have an account?{" "}
             <a
-              href="/sign-in"
+              href="/sign-up"
               className="font-medium underline underline-offset-4"
             >
-              Sign in
+              Sign up
             </a>
           </p>
         </div>
@@ -143,10 +138,10 @@ export default function SignupPage() {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         isLoading={isLoading}
-        status={signUpStatus}
-        successMessage="Sign-up successful! Redirecting..."
+        status={loginStatus}
+        successMessage="Login successful! Redirecting..."
         idleMessage="Please wait while we process your request..."
-        errorMessage="Sign-up failed. Please try again."
+        errorMessage="Login failed. Please try again."
       />
     </div>
   );
