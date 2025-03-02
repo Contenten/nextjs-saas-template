@@ -39,6 +39,10 @@ function resolveConfig(platform: typeof process.env.PLATFORM): NextConfig {
   }
 
   return ({
+    env: {
+      DEV_EMAIL: process.env.NODE_ENV === "development" ? process.env.NEXT_DEV_EMAIL : '',
+      DEV_PASSWORD: process.env.NODE_ENV === "development" ? process.env.NEXT_DEV_PASSWORD : '',
+    },
     reactStrictMode: true,
     experimental: {
       // typedRoutes: true,

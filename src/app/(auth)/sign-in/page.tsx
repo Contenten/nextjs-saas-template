@@ -36,8 +36,8 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: process.env.DEV_EMAIL || "",
+      password: process.env.DEV_PASSWORD || "",
     },
   });
 
@@ -55,7 +55,6 @@ export default function LoginPage() {
       if (response) {
         setLoginStatus("success");
         setTimeout(() => {
-          // @ts-expect-error
           router.push("/dashboard");
           setIsDialogOpen(false);
         }, 2000);

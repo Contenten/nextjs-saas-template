@@ -38,8 +38,8 @@ export default function SignupPage() {
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: process.env.DEV_EMAIL || "",
+      password: process.env.DEV_PASSWORD || "",
     },
   });
 
@@ -61,7 +61,6 @@ export default function SignupPage() {
         onSuccess: (ctx) => {
           setIsLoading(false);
           setSignUpStatus("success");
-          // @ts-expect-error
           router.push("/dashboard");
           setIsDialogOpen(false);
         },
