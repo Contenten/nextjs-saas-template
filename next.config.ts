@@ -81,7 +81,7 @@ function resolveConfig(platform: typeof process.env.PLATFORM): NextConfig {
     eslint: {
       ignoreDuringBuilds: true
     },
-    output,
+    // output,
     basePath,
   }) as NextConfig
 }
