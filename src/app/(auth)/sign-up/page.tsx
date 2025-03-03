@@ -19,10 +19,18 @@ import {
   FormMessage,
 } from "@/registry/new-york/ui/form";
 
-const signupSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
+const signupSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    passwordConfirmation: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Passwords do not match",
+    path: ["passwordConfirmation"],
+  });
 
 type SignupForm = z.infer<typeof signupSchema>;
 
@@ -40,6 +48,7 @@ export default function SignupPage() {
     defaultValues: {
       email: process.env.DEV_EMAIL || "",
       password: process.env.DEV_PASSWORD || "",
+      passwordConfirmation: process.env.DEV_PASSWORD || "",
     },
   });
 
@@ -104,6 +113,24 @@ export default function SignupPage() {
             <FormField
               control={form.control}
               name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="border-input"
+                      type="password"
+                      placeholder="********"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="passwordConfirmation"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
