@@ -1,0 +1,31 @@
+---
+description: this project based on the website of shadcn, some rules should specialized
+globs: *.tsx
+alwaysApply: false
+---
+This project based on the website of shadcn.
+
+## Style Guide
+
+### Importing Shadcn Components
+
+When import shadcn compoents, the llm generated code always looks like:
+
+```tsx
+import { Button } from "@/components/ui/button";
+```
+
+In this project, it should be:
+
+```tsx
+import { Button } from "@/registry/new-york/ui/button";
+```
+
+### Desgin System
+
+Analyze the website ui.shadcn.com and provide a clear, concise overview of its design system, including:
+
+- key components
+- styling conventions
+- layout patterns
+- any notable UI features or principles it follows.
