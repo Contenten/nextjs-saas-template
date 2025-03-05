@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { DiscordLogoIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
+import { Eye, EyeOff } from "lucide-react";
 
 import { signIn } from "@/lib/auth-client";
 import { Button } from "@/registry/new-york/ui/button";
@@ -39,12 +40,13 @@ export default function LoginPage() {
     "idle",
   );
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: process.env.DEV_EMAIL || "",
+      email: process.env.NEXT_DEV_EMAIL || "",
       password: process.env.DEV_PASSWORD || "",
     },
   });
@@ -111,21 +113,37 @@ export default function LoginPage() {
                   <div className="flex justify-between items-center">
                     <FormLabel>Password</FormLabel>
                     <a
-                      href="/forgot-password"
+                      href="/forget-password"
                       className="text-sm underline underline-offset-4"
                     >
                       Forgot your password?
                     </a>
                   </div>
-                  <FormControl>
-                    <Input
-                      className="border-input"
-                      type="password"
-                      placeholder="********"
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        className="border-input pr-10"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="********"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
                       disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,7 +156,7 @@ export default function LoginPage() {
 
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <a
               href="/sign-up"
               className="font-medium underline underline-offset-4"
