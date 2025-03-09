@@ -4,7 +4,6 @@ import { MainNav } from "@/components/main-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import Link from "next/link";
 import { Button } from "@/registry/new-york/ui/button";
-import { useSession, signOut } from "@/lib/auth-client";
 import {
   Avatar,
   AvatarFallback,
@@ -21,7 +20,7 @@ import {
 } from "@/registry/new-york/ui/dropdown-menu";
 
 export function SiteHeader() {
-  const session = useSession();
+  const session = {} as any;
   const isAuthenticated = !!session.data?.user;
 
   return (

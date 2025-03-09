@@ -1,4 +1,4 @@
-import pkg from '@/../package.json';
+import pkg from "@/../package.json";
 import { siteConfig } from "@/config/site";
 
 export function SiteFooter() {
