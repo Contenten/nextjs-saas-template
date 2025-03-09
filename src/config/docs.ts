@@ -45,6 +45,11 @@ export const docsConfig: DocsConfig = {
           href: "/docs/branch-management",
           items: [],
         },
+        {
+          title: "Saas Features",
+          href: "/docs/saas",
+          items: [],
+        },
       ],
     },
   ],

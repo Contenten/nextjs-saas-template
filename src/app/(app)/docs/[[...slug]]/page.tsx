@@ -85,6 +85,7 @@ export async function generateStaticParams(): Promise<
       { slug: ["dark-mode"] },
       { slug: ["deploy"] },
       { slug: ["branch-management"] },
+      { slug: ["saas"] },
     ];
   }
 
