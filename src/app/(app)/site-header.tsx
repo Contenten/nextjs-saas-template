@@ -18,9 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/registry/new-york/ui/dropdown-menu";
+import { signOut, useSession } from "@/lib/auth-client";
 
 export function SiteHeader() {
-  const session = {} as any;
+  const session = useSession();
   const isAuthenticated = !!session.data?.user;
 
   return (
