@@ -1,0 +1,25 @@
+---
+description: auth system for this saas template
+globs: 
+alwaysApply: false
+---
+
+Description: This rule outlines the basic requirements and setup for integrating Better Auth into the SaaS template project. It covers authentication methods, API usage, client setup, and session management.
+
+## API Usage:
+
+Use the api object provided by Better Auth to interact with server-side endpoints.
+Ensure to handle headers and query parameters appropriately when calling API endpoints.
+
+## Session Management:
+Utilize the session management features provided by Better Auth to maintain user sessions.
+Handle session cookies and ensure secure storage and transmission.
+
+## Error Handling:
+Implement error handling using the $ERROR_CODES object to manage server error responses.
+Customize error messages for different languages or user interfaces.
+
+## Security Considerations:
+
+Ensure secure password hashing using the default scrypt algorithm or a custom implementation.
+Regularly update dependencies and review security practices to protect user data.
