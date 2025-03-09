@@ -94,6 +94,7 @@ const ProfilePage = () => {
         },
         body: JSON.stringify({
           name: username,
+          // TODO: Add image upload to static server, such as Cloudflare R2
           image: avatarUrl,
         }),
       });
@@ -267,6 +268,7 @@ const ProfilePage = () => {
                 <div className="pt-4 border-t">
                   <div className="flex justify-between items-center mb-4">
                     <div>
+                      {/* manually add a verification badge */}
                       <h3 className="text-lg font-medium">Email Address</h3>
                       <p className="text-sm text-muted-foreground">
                         {user?.email}
@@ -348,6 +350,7 @@ const ProfilePage = () => {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current Password</Label>
+                    {/* TODO: add a visibility toggle */}
                     <Input
                       id="currentPassword"
                       type="password"
@@ -359,6 +362,7 @@ const ProfilePage = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">New Password</Label>
+                    {/* TODO: add a visibility toggle */}
                     <Input
                       id="newPassword"
                       type="password"

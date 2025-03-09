@@ -28,7 +28,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const user = await getUserById(id);
@@ -65,6 +65,7 @@ export async function POST(
       );
     }
 
+    // TODO: Add password hashing
     // Extract password and salt from stored password (format: hash:salt)
     const [storedHash, storedSalt] = passwordAccount.password.split(":");
 
