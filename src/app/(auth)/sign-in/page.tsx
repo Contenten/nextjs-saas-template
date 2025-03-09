@@ -61,11 +61,14 @@ export default function LoginPage() {
       const response = await signIn.email({
         email: data.email,
         password: data.password,
+        callbackURL: "/",
+        rememberMe: true,
       });
       if (response) {
         setLoginStatus("success");
         setTimeout(() => {
-          router.push("/dashboard");
+          // router.push("/dashboard"); TODO: uncomment this
+          router.push("/");
           setIsDialogOpen(false);
         }, 2000);
       }

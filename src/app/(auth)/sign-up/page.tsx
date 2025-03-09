@@ -72,7 +72,7 @@ export default function SignupPage() {
         email,
         password,
         name: email.split("@")[0]!,
-        callbackURL: "/dashboard",
+        callbackURL: "/",
       },
       {
         onRequest: (ctx) => {
@@ -84,7 +84,7 @@ export default function SignupPage() {
         onSuccess: (ctx) => {
           setIsLoading(false);
           setSignUpStatus("success");
-          router.push("/dashboard");
+          router.push("/");
           setIsDialogOpen(false);
         },
         onError: (ctx) => {
