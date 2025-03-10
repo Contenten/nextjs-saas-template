@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/registry/new-york/ui/form";
+import { Card, CardContent } from "@/registry/new-york/ui/card";
 
 const signupSchema = z
   .object({
@@ -48,8 +49,8 @@ type SignupForm = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [signUpStatus, setSignUpStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
@@ -97,123 +98,130 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md p-8 space-y-8 rounded-lg shadow-md border">
-        <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-          Sign Up
-        </h1>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+    <div className="flex items-center justify-center">
+      <Card className="overflow-hidden w-full max-w-md">
+        <CardContent className="grid p-0">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">Create an account</h1>
+                  <p className="text-balance text-muted-foreground">
+                    Sign up for your Acme Inc account
+                  </p>
+                  {error && <p className="text-red-500 text-center">{error}</p>}
+                </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="border-input"
-                      type="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        className="border-input pr-10"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="********"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="passwordConfirmation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        className="border-input pr-10"
-                        type={showPasswordConfirmation ? "text" : "password"}
-                        placeholder="********"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() =>
-                        setShowPasswordConfirmation(!showPasswordConfirmation)
-                      }
-                      disabled={isLoading}
-                    >
-                      {showPasswordConfirmation ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full">
-              Sign Up
-            </Button>
-          </form>
-        </Form>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="you@example.com"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <a
-              href="/sign-in"
-              className="font-medium underline underline-offset-4"
-            >
-              Sign in
-            </a>
-          </p>
-        </div>
-      </div>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel>Password</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="********"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="passwordConfirmation"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel>Confirm Password</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={
+                              showPasswordConfirmation ? "text" : "password"
+                            }
+                            placeholder="********"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() =>
+                            setShowPasswordConfirmation(
+                              !showPasswordConfirmation,
+                            )
+                          }
+                          disabled={isLoading}
+                        >
+                          {showPasswordConfirmation ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating account..." : "Sign Up"}
+                </Button>
+
+                <div className="text-center text-sm">
+                  Already have an account?{" "}
+                  <a href="/sign-in" className="underline underline-offset-4">
+                    Sign in
+                  </a>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <LoadingDialog
         isOpen={isDialogOpen}
