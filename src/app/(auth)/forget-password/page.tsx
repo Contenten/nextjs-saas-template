@@ -19,14 +19,8 @@ import {
 } from "@/registry/new-york/ui/form";
 import { Input } from "@/registry/new-york/ui/input";
 import { Icons } from "@/components/icon";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/registry/new-york/ui/card";
+import { Card, CardContent } from "@/registry/new-york/ui/card";
+import { LoadingDialog } from "../loading-dialog";
 
 // Form schema for validation
 const formSchema = z.object({
@@ -40,6 +34,10 @@ export default function ForgetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [resetStatus, setResetStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -52,6 +50,8 @@ export default function ForgetPasswordPage() {
   async function onSubmit({ email }: FormValues) {
     setIsLoading(true);
     setError(null);
+    setIsDialogOpen(true);
+    setResetStatus("idle");
 
     try {
       const res = await client.forgetPassword({
@@ -59,10 +59,15 @@ export default function ForgetPasswordPage() {
         redirectTo: "/reset-password",
       });
       setSuccess(true);
-      // Optionally redirect after successful submission
-      // router.push("/check-email")
+      setResetStatus("success");
+      // Wait a moment to show the success message
+      setTimeout(() => {
+        setIsDialogOpen(false);
+      }, 1500);
     } catch (err) {
       setError("An error occurred. Please try again.");
+      setResetStatus("error");
+      setIsDialogOpen(false);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -70,83 +75,92 @@ export default function ForgetPasswordPage() {
   }
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[500px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Reset your password
-          </h1>
-          <p className="text-base text-muted-foreground">
-            Enter your email address and we&apos;ll send you a link to reset
-            your password
-          </p>
-        </div>
+    <div className="flex items-center justify-center">
+      <Card className="overflow-hidden w-full max-w-md">
+        <CardContent className="grid p-0">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">Reset your password</h1>
+                  <p className="text-balance text-muted-foreground">
+                    Enter your email address and we'll send you a link to reset
+                    your password
+                  </p>
+                  {error && <p className="text-red-500 text-center">{error}</p>}
+                </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            {success ? (
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <CheckIcon className="h-8 w-8 text-green-500" />
-                <p className="text-center text-base">
-                  Check your email for a reset link. If you don&apos;t see it,
-                  check your spam folder.
-                </p>
-              </div>
-            ) : (
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
-                >
-                  {error && (
-                    <div className="p-4 bg-destructive/15 text-destructive text-base rounded-md">
-                      {error}
+                {success ? (
+                  <div className="flex flex-col items-center justify-center space-y-4 py-4">
+                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckIcon className="h-6 w-6 text-green-600" />
                     </div>
-                  )}
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="name@example.com"
-                            type="email"
-                            autoCapitalize="none"
-                            autoComplete="email"
-                            autoCorrect="off"
-                            disabled={isLoading}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading && (
-                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Send reset link
-                  </Button>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-center border-t p-4">
-            <p className="text-center text-base text-muted-foreground">
-              Return to{" "}
-              <a
-                href="/sign-in"
-                className="text-base underline underline-offset-4"
-              >
-                Sign In
-              </a>
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
+                    <p className="text-center text-base">
+                      Check your email for a reset link. If you don't see it,
+                      check your spam folder.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="grid gap-2">
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="name@example.com"
+                              type="email"
+                              autoCapitalize="none"
+                              autoComplete="email"
+                              autoCorrect="off"
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                          Sending reset link...
+                        </>
+                      ) : (
+                        "Send reset link"
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                <div className="text-center text-sm">
+                  Return to{" "}
+                  <a href="/sign-in" className="underline underline-offset-4">
+                    Sign In
+                  </a>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <LoadingDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        isLoading={isLoading}
+        status={resetStatus}
+        successMessage="Reset link sent! Check your email."
+        idleMessage="Sending password reset link..."
+        errorMessage="Failed to send reset link. Please try again."
+      />
     </div>
   );
 }
