@@ -13,12 +13,58 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/registry/new-york/ui/dropdown-menu";
+import { CrossPlatformShortcut } from "@/registry/new-york/ui/cross-platform-shortcut";
 import Link from "next/link";
+import { useShortcut } from "@/lib/shortcuts/hooks/useShortcut";
+import { useRouter } from "next/navigation";
 
 export function UserNav() {
+  const router = useRouter();
+
+  // Define shortcuts
+  useShortcut({
+    id: "user-profile",
+    description: "Go to user profile",
+    keyCombos: [{ key: "p", modifiers: ["shift", "meta"] }],
+    handler: () => {
+      router.push("/profile");
+    },
+    preventDefault: true,
+  });
+
+  useShortcut({
+    id: "user-billing",
+    description: "Go to billing page",
+    keyCombos: [{ key: "b", modifiers: ["meta"] }],
+    handler: () => {
+      router.push("/billing");
+    },
+    preventDefault: true,
+  });
+
+  useShortcut({
+    id: "user-settings",
+    description: "Go to settings page",
+    keyCombos: [{ key: "s", modifiers: ["meta"] }],
+    handler: () => {
+      router.push("/settings");
+    },
+    preventDefault: true,
+  });
+
+  useShortcut({
+    id: "user-sign-out",
+    description: "Sign out from the application",
+    keyCombos: [{ key: "q", modifiers: ["meta", "alt"] }],
+    handler: () => {
+      handleSignOut();
+    },
+    preventDefault: true,
+    stopPropagation: true,
+  });
+
   const handleSignOut = () => {
     window.location.href = "/";
   };
@@ -47,19 +93,25 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/profile">
               Profile
-              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+              <CrossPlatformShortcut
+                keyCombo={{ key: "p", modifiers: ["shift", "meta"] }}
+              />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/billing">
               Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+              <CrossPlatformShortcut
+                keyCombo={{ key: "b", modifiers: ["meta"] }}
+              />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">
               Settings
-              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+              <CrossPlatformShortcut
+                keyCombo={{ key: "s", modifiers: ["meta"] }}
+              />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
@@ -69,7 +121,9 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
           Sign out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+          <CrossPlatformShortcut
+            keyCombo={{ key: "q", modifiers: ["meta", "alt"] }}
+          />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
