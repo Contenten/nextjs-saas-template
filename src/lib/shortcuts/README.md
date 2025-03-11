@@ -141,6 +141,57 @@ function CodeEditor() {
   - Supports both global and context-specific shortcuts
   - This shortcut system can be integrated with any UI framework and provides a solid foundation for building keyboard-driven applications.
 
+## Handling Special Characters in macOS
+
+On macOS, using the Option/Alt key with letter keys produces special characters. For example:
+- `⌥Q` (Alt+Q) produces `œ`
+- `⌥W` (Alt+W) produces `∑`
+
+This creates a unique challenge for shortcuts using Alt/Option on macOS, as key combinations like `⌘⌥Q` (Command+Alt+Q) actually register as `⌘œ` (Command+œ) at the system level.
+
+### Our Solution
+
+Our shortcut system automatically handles this behavior by:
+
+1. Detecting when a special character is produced by an Alt+key combination
+2. Mapping the special character back to its base key
+3. Preserving the Alt modifier in the key combination
+4. Ensuring the correct shortcut action is triggered
+
+Example of special character mapping:
+
+```typescript
+// When user presses Command+Alt+Q
+// The event.key will be 'œ' and event.altKey will be true
+
+// Our system normalizes this to:
+const normalizedKey = 'q';  // Instead of 'œ'
+const modifiers = ['meta', 'alt'];  // Preserves both modifiers
+```
+
+### Testing Alt Key Shortcuts
+
+When testing shortcuts that use the Alt/Option key on macOS, be aware that:
+
+1. The visual display may show `⌘⌥Q`, but internally the system is handling `⌘œ`
+2. Our system handles this translation transparently
+3. You should test these shortcuts specifically on macOS to ensure they work correctly
+
+### Complete Special Character Map
+
+Here's the complete mapping of special characters produced by Alt+key combinations on macOS:
+
+```
+Alt+Q → œ    Alt+W → ∑    Alt+E → ´    Alt+R → ®    Alt+T → †
+Alt+Y → ¥    Alt+U → ¨    Alt+I → ˆ    Alt+O → ø    Alt+P → π
+Alt+A → å    Alt+S → ß    Alt+D → ∂    Alt+F → ƒ    Alt+G → ©
+Alt+H → ˙    Alt+J → ∆    Alt+K → ˚    Alt+L → ¬
+Alt+Z → Ω    Alt+X → ≈    Alt+C → ç    Alt+V → √
+Alt+B → ∫    Alt+N → ˜    Alt+M → µ
+```
+
+All of these special characters are automatically normalized in our shortcut system.
+
 ```prompt
 checking shortcut user-billing false
 shortcut-manager.ts:165

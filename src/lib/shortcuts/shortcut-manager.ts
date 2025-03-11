@@ -146,6 +146,7 @@ class ShortcutManager {
 
     // Extract event information
     const key = event.key;
+    const keyCode = event.keyCode || event.which; // Use keyCode as fallback
     const modifiers: Modifier[] = [];
 
     if (event.ctrlKey) modifiers.push("ctrl");
@@ -158,8 +159,100 @@ class ShortcutManager {
       return;
     }
 
+    // Special handling for macOS Alt key combinations that produce special characters
+    let normalizedKey = key;
+    const isMac = navigator.platform.includes("Mac");
+    const hasAltModifier = modifiers.includes("alt");
+
+    if (isMac && hasAltModifier) {
+      // Map of special characters produced by Alt+key combinations on macOS
+      // to their base key equivalent
+      const specialCharMap: Record<string, string> = {
+        œ: "q", // Alt+q
+        "∑": "w", // Alt+w
+        "´": "e", // Alt+e
+        "®": "r", // Alt+r
+        "†": "t", // Alt+t
+        "¥": "y", // Alt+y
+        "¨": "u", // Alt+u
+        ˆ: "i", // Alt+i
+        ø: "o", // Alt+o
+        π: "p", // Alt+p
+        å: "a", // Alt+a
+        ß: "s", // Alt+s
+        "∂": "d", // Alt+d
+        ƒ: "f", // Alt+f
+        "©": "g", // Alt+g
+        "˙": "h", // Alt+h
+        "∆": "j", // Alt+j
+        "˚": "k", // Alt+k
+        "¬": "l", // Alt+l
+        Ω: "z", // Alt+z
+        "≈": "x", // Alt+x
+        ç: "c", // Alt+c
+        "√": "v", // Alt+v
+        "∫": "b", // Alt+b
+        "˜": "n", // Alt+n
+        µ: "m", // Alt+m
+      };
+
+      // If the pressed key is a special character, normalize it back to the base key
+      if (specialCharMap[key]) {
+        normalizedKey = specialCharMap[key];
+
+        // We still want to keep the alt modifier even though we're normalizing the key
+        if (!modifiers.includes("alt")) {
+          modifiers.push("alt");
+        }
+
+        console.log(
+          `Normalized special character "${key}" to "${normalizedKey}" with alt modifier`,
+        );
+      }
+    }
+
     // Create a string representation of this key press
-    const keyString = this.createKeyString(key, modifiers);
+    const keyString = this.createKeyString(normalizedKey, modifiers);
+
+    // Early detection for known system shortcuts that might cause issues
+    const isQuitCombination =
+      normalizedKey.toLowerCase() === "q" && modifiers.includes("meta");
+    const isLogoutCombination =
+      normalizedKey.toLowerCase() === "q" &&
+      modifiers.includes("meta") &&
+      modifiers.includes("shift");
+
+    // If this is a system shortcut we want to definitely avoid, exit early
+    if (isQuitCombination || isLogoutCombination) {
+      // Check for matching shortcuts directly without using findMatchingShortcut
+      for (const shortcut of this.shortcuts.values()) {
+        // Skip shortcuts for inactive contexts
+        if (shortcut.context && !this.activeContexts.has(shortcut.context)) {
+          continue;
+        }
+
+        // For single key shortcuts
+        if (shortcut.keyCombos.length === 1) {
+          const combo = shortcut.keyCombos[0];
+          if (!combo) continue;
+
+          const targetModifiers = combo.modifiers || [];
+          const targetKey =
+            typeof combo.key === "string" && combo.key.length === 1
+              ? combo.key.toLowerCase()
+              : combo.key;
+
+          const targetString = this.createKeyString(targetKey, targetModifiers);
+
+          if (keyString === targetString && shortcut.preventDefault) {
+            event.preventDefault();
+            event.stopPropagation();
+            shortcut.handler();
+            return;
+          }
+        }
+      }
+    }
 
     // Reset sequence if this is a new sequence with modifiers
     // This helps prevent the issue where pressing cmd+b registers as two separate presses
