@@ -1,0 +1,41 @@
+---
+description: constraint for nextjs features
+globs: *.tsx, *.ts
+alwaysApply: false
+---
+you should follow the suggestion that NextJS provided:
+
+
+## Dynamic APIs are Asynchronous
+
+Dynamic APIs are:
+
+The params and searchParams props that get provided to pages, layouts, metadata APIs, and route handlers.
+cookies(), draftMode(), and headers() from next/headers
+In Next 15, these APIs have been made asynchronous. 
+
+```js
+// app/[id]/page.js
+async function Page({ params, searchParams }) {
+  // asynchronous access of `params.id` `searchParams.page`.
+  const { id } = await params
+  const { page } = await searchParams
+  return <p>ID: {id}</p>
+}
+```
+
+If the warning occurred in a synchronous component (e.g. a Client component), you must use React.use() to unwrap the Promise first:
+
+```js
+// app/[id]/page.js
+'use client'
+import * as React from 'react'
+ 
+function Page({ params }) {
+  // asynchronous access of `params.id`.
+  const { id } = React.use(params)
+  return <p>ID: {id}</p>
+}
+
+```
+
