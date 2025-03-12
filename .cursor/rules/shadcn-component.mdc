@@ -21,6 +21,37 @@ In this project, it should be:
 import { Button } from "@/registry/new-york/ui/button";
 ```
 
+### React Component 
+
+**No Nested Component**
+
+```tsx
+// don't write code like this
+function ComponentA () {
+    // ...
+    function ComponentB () {
+        // ...
+    }
+}
+```
+
+React Component with named function:
+
+```tsx
+function ComponentA () {
+    // ...
+}
+```
+
+ranther than: 
+
+```tsx
+const ComponentA = () => {
+}
+```
+
+
+
 ### Desgin System
 
 Analyze the website ui.shadcn.com and provide a clear, concise overview of its design system, including:
@@ -29,3 +60,8 @@ Analyze the website ui.shadcn.com and provide a clear, concise overview of its d
 - styling conventions
 - layout patterns
 - any notable UI features or principles it follows.
+
+
+
+
+
