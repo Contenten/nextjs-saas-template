@@ -20,7 +20,19 @@ import Link from "next/link";
 import { useShortcut } from "@/lib/shortcuts/hooks/useShortcut";
 import { useRouter } from "next/navigation";
 
-export function UserNav() {
+export interface UserMenuProps {
+  user: {
+    id: string;
+    email: string;
+    emailVerified: boolean;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    image?: string | null | undefined;
+  };
+}
+
+export function UserNav({ user }: UserMenuProps) {
   const router = useRouter();
 
   // Define shortcuts
@@ -74,17 +86,24 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/avatars/01.png" alt="@shadcn" />
-            <AvatarFallback>SC</AvatarFallback>
+            <AvatarImage
+              src={user?.image || "https://github.com/shadcn.png"}
+              alt={user?.name || "User"}
+            />
+            <AvatarFallback>
+              {user?.name ? user?.name.substring(0, 2).toUpperCase() : "U"}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
+            <p className="text-sm font-medium leading-none">
+              {user?.name || "User"}
+            </p>
             <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+              {user?.email || ""}
             </p>
           </div>
         </DropdownMenuLabel>

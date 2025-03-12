@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/registry/new-york/ui/dropdown-menu";
 import { signOut, useSession } from "@/lib/auth-client";
+import { UserNav } from "@/app/(dashboard)/dashboard/components/user-nav";
 
 export function SiteHeader() {
   const session = useSession();
@@ -35,7 +36,7 @@ export function SiteHeader() {
             <nav className="flex items-center gap-4">
               {/* TODO: handle loading state */}
               {isAuthenticated && session.data?.user ? (
-                <UserMenu user={session.data.user} />
+                <UserNav user={session.data.user} />
               ) : (
                 <Button variant="default" size="sm" asChild>
                   <Link href="/sign-in">Sign In</Link>
