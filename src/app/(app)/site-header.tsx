@@ -18,9 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/registry/new-york/ui/dropdown-menu";
+import { signOut, useSession } from "@/lib/auth-client";
 
 export function SiteHeader() {
-  const session = {} as any;
+  const session = useSession();
   const isAuthenticated = !!session.data?.user;
 
   return (
@@ -32,6 +33,7 @@ export function SiteHeader() {
           <div className="flex flex-1 items-center justify-between gap-2 md:justify-end">
             <div className="w-full flex-1 md:w-auto md:flex-none"></div>
             <nav className="flex items-center gap-4">
+              {/* TODO: handle loading state */}
               {isAuthenticated && session.data?.user ? (
                 <UserMenu user={session.data.user} />
               ) : (
