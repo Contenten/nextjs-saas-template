@@ -113,9 +113,11 @@ export default async function UserRolesAdminPage({
                         View
                       </Button>
                     </Link>
-                    <Link href={`/admin/user-roles/${item.userRole.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        Edit
+                    <Link
+                      href={`/api/admin/user-roles/${item.userRole.id}/delete`}
+                    >
+                      <Button variant="destructive" size="sm">
+                        Remove
                       </Button>
                     </Link>
                   </div>
