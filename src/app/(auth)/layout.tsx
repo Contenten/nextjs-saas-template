@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 
 import { SiteFooter } from "@/app/(app)/site-footer";
-import { SiteHeader } from "@/app/(app)/site-header";
+// import { SiteHeader } from "@/app/(app)/site-header";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div data-wrapper="" className="border-grid flex flex-1 flex-col">
-      <SiteHeader />
+      {/* <SiteHeader /> */}
 
       <main className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted dark:bg-black p-6 md:p-10">
         <div className="flex w-full max-w-sm flex-col gap-6">
