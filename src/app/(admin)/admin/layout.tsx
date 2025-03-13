@@ -1,16 +1,78 @@
 import { ReactNode } from "react";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description: "Database administration dashboard",
 };
 
+// Define runtime to use Node.js runtime
+export const runtime = "nodejs";
+
+// Define types for the session data
+interface Role {
+  id: string;
+  name: string;
+  permissions?: Record<string, boolean>;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+interface SessionData {
+  isValid: boolean;
+  user: User | null;
+  roles: Role[];
+}
+
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default async function AdminLayout({ children }: AdminLayoutProps) {
+  // Get the current session data from the API
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get("better-auth.session_token")?.value;
+
+  if (!authCookie) {
+    redirect("/sign-in");
+  }
+
+  // Use the base URL from environment variables
+  const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
+  // Call the check-session API to validate the session and get user data
+  const response = await fetch(`${baseUrl}/api/auth/check-session`, {
+    headers: {
+      Cookie: `better-auth.session_token=${authCookie}`,
+    },
+    // Ensure this request is not cached
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    redirect("/sign-in");
+  }
+
+  const sessionData: SessionData = await response.json();
+  const { isValid, user, roles = [] } = sessionData;
+
+  // Check if user is authenticated
+  if (!isValid || !user) {
+    redirect("/sign-in");
+  }
+
+  // Check if user has Admin role
+  const isAdmin = roles.some((role: Role) => role.name === "Admin");
+  if (!isAdmin) {
+    redirect("/unauthorized");
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">

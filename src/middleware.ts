@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Define types for the session data returned by the API
+interface Role {
+  id: string;
+  name: string;
+  permissions?: Record<string, boolean>;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+interface SessionData {
+  isValid: boolean;
+  user: User | null;
+  roles: Role[];
+}
+
 // Routes that don't require authentication
 const publicRoutes = [
   "/",
@@ -11,6 +30,7 @@ const publicRoutes = [
   "/api/auth/sign-up",
   "/api/auth/sign-in",
   "/unauthorized",
+  "/api/auth/check-session", // New API route for session checking
 ];
 
 // Routes that require specific permissions (format: 'route': ['permission1', 'permission2'])
@@ -30,6 +50,11 @@ const roleProtectedRoutes: Record<string, string[]> = {
   "/admin": ["Admin"],
   "/admin/users": ["Admin"],
   "/admin/roles": ["Admin"],
+  "/admin/profiles": ["Admin"],
+  "/admin/user-roles": ["Admin"],
+  "/admin/sessions": ["Admin"],
+  "/admin/accounts": ["Admin"],
+  "/admin/verifications": ["Admin"],
   "/moderator": ["Admin", "Moderator"],
   "/dashboard": ["Admin", "User", "Moderator"],
 };
@@ -48,6 +73,100 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
+
+  // Get session token from cookie
+  const authCookie = request.cookies.get("better-auth.session_token")?.value;
+  if (!authCookie) {
+    // Redirect to sign-in page if not authenticated
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // Instead of directly querying the database in middleware (which uses Node.js modules),
+  // make a request to an API route that will handle the session validation
+  const apiUrl = new URL("/api/auth/check-session", request.url);
+  const response = await fetch(apiUrl, {
+    method: "GET",
+    headers: {
+      Cookie: `better-auth.session_token=${authCookie}`,
+    },
+  });
+
+  if (!response.ok) {
+    // Session is invalid or expired
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  const sessionData: SessionData = await response.json();
+  const { isValid, user, roles = [] } = sessionData;
+
+  if (!isValid || !user) {
+    // Invalid session or user not found
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // Check permission-protected routes
+  for (const route in permissionProtectedRoutes) {
+    if (pathname === route || pathname.startsWith(route + "/")) {
+      const requiredPermissions = permissionProtectedRoutes[route];
+      if (!requiredPermissions) {
+        continue;
+      }
+
+      // Check if user has all required permissions
+      const missingPermission = requiredPermissions.some((permission) => {
+        // Check user permissions from the roles returned by the API
+        return !roles.some(
+          (role: Role) => role.permissions && role.permissions[permission],
+        );
+      });
+
+      if (missingPermission) {
+        // Redirect to unauthorized page if user doesn't have required permission
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+    }
+  }
+
+  // Check role-protected routes
+  for (const route in roleProtectedRoutes) {
+    if (pathname === route || pathname.startsWith(route + "/")) {
+      const requiredRoles = roleProtectedRoutes[route];
+      if (!requiredRoles) {
+        continue;
+      }
+
+      // Check if user has any of the required roles
+      const hasRequiredRole = roles.some((role: Role) =>
+        requiredRoles.includes(role.name),
+      );
+
+      if (!hasRequiredRole) {
+        // Redirect to unauthorized page if user doesn't have any required role
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+    }
+  }
+
+  // Check user-specific routes (these are routes a user can access for their own data)
+  if (userSpecificRoutes.some((route) => pathname.startsWith(route))) {
+    // Extract user ID from the URL if present (e.g., /profile/123)
+    const urlParts = pathname.split("/");
+    const urlUserId = urlParts.length > 2 ? urlParts[2] : null;
+
+    // If URL contains a user ID and it doesn't match the current user's ID
+    if (urlUserId && urlUserId !== user.id) {
+      // Check if user has Admin role, which allows access to other users' data
+      const isAdmin = roles.some((role: Role) => role.name === "Admin");
+
+      if (!isAdmin) {
+        // Redirect to unauthorized page if user is trying to access another user's data
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+    }
+  }
+
+  // If all checks pass, allow the request to proceed
+  return NextResponse.next();
 }
 
 // Configure the middleware to run on specific paths
