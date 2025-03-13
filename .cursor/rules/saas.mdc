@@ -1,0 +1,10 @@
+---
+description:  
+globs: 
+alwaysApply: false
+---
+this project is a minimal saas, keep it's functionality simple and clean, and with strong extensible, usable.
+
+the core features list in landing page [page.tsx](mdc:src/app/(app)/page.tsx).
+
+when you write code corresponding to these features, you should be cautious, and keep them stable and robust.
