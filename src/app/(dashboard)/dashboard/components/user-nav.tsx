@@ -19,6 +19,7 @@ import { CrossPlatformShortcut } from "@/registry/new-york/ui/cross-platform-sho
 import Link from "next/link";
 import { useShortcut } from "@/lib/shortcuts/hooks/useShortcut";
 import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 
 export interface UserMenuProps {
   user: {
@@ -78,7 +79,7 @@ export function UserNav({ user }: UserMenuProps) {
   });
 
   const handleSignOut = () => {
-    window.location.href = "/";
+    signOut();
   };
 
   return (
