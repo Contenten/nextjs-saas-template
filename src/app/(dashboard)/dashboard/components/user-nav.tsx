@@ -78,8 +78,9 @@ export function UserNav({ user }: UserMenuProps) {
     stopPropagation: true,
   });
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = "/";
   };
 
   return (
