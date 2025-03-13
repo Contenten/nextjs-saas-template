@@ -56,7 +56,7 @@ export default function LoginPage() {
       {
         email: data.email,
         password: data.password,
-        callbackURL: "/",
+        callbackURL: "/dashboard",
         rememberMe: true,
       },
       {
@@ -69,7 +69,7 @@ export default function LoginPage() {
         onSuccess: (ctx) => {
           setIsLoading(false);
           setLoginStatus("success");
-          router.push("/");
+          router.push("/dashboard");
           setIsDialogOpen(false);
         },
         onError: (ctx) => {

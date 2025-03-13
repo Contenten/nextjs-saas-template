@@ -19,7 +19,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Redirect authenticated users to homepage
   useEffect(() => {
     if (session.data?.user) {
-      router.push("/");
+      router.push("/dashboard");
     }
   }, [session.data, router]);
 

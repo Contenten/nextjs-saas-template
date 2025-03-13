@@ -71,11 +71,13 @@ export async function middleware(request: NextRequest) {
       (route) => pathname === route || pathname.startsWith(route + "/"),
     )
   ) {
+    console.log("Public route detected:", pathname);
     return NextResponse.next();
   }
 
   // Get session token from cookie
   const authCookie = request.cookies.get("better-auth.session_token")?.value;
+  console.log("Auth cookie:", authCookie);
   if (!authCookie) {
     // Redirect to sign-in page if not authenticated
     return NextResponse.redirect(new URL("/sign-in", request.url));
