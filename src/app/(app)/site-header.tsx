@@ -4,8 +4,9 @@ import { MainNav } from "@/components/main-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import Link from "next/link";
 import { Button } from "@/registry/new-york/ui/button";
-import { UserMenu } from "@/components/user-menu";
 import { getCurrentUser } from "@/app/(app)/actions";
+
+import { UserNav } from "@/app/(dashboard)/dashboard/components/user-nav";
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
@@ -20,8 +21,9 @@ export async function SiteHeader() {
           <div className="flex flex-1 items-center justify-between gap-2 md:justify-end">
             <div className="w-full flex-1 md:w-auto md:flex-none"></div>
             <nav className="flex items-center gap-4">
-              {isAuthenticated && user ? (
-                <UserMenu user={user} />
+              {/* TODO: handle loading state */}
+              {isAuthenticated ? (
+                <UserNav user={user} />
               ) : (
                 <Button variant="default" size="sm" asChild>
                   <Link href="/sign-in">Sign In</Link>
