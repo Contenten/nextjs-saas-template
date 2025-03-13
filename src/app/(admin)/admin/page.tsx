@@ -8,7 +8,15 @@ import {
   CardTitle,
 } from "@/registry/new-york/ui/card";
 import { db } from "@/db/drizzle";
-import { user, session, account, verification } from "@/db/schema";
+import {
+  user,
+  session,
+  account,
+  verification,
+  profile,
+  role,
+  user_role,
+} from "@/db/schema";
 import { count } from "drizzle-orm";
 
 export const metadata: Metadata = {
@@ -23,12 +31,18 @@ async function getDatabaseStats() {
   const verificationResults = await db
     .select({ value: count() })
     .from(verification);
+  const profileResults = await db.select({ value: count() }).from(profile);
+  const roleResults = await db.select({ value: count() }).from(role);
+  const userRoleResults = await db.select({ value: count() }).from(user_role);
 
   return {
     users: userResults[0]?.value ?? 0,
     sessions: sessionResults[0]?.value ?? 0,
     accounts: accountResults[0]?.value ?? 0,
     verifications: verificationResults[0]?.value ?? 0,
+    profiles: profileResults[0]?.value ?? 0,
+    roles: roleResults[0]?.value ?? 0,
+    userRoles: userRoleResults[0]?.value ?? 0,
   };
 }
 
@@ -100,22 +114,62 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/admin/profiles">
+          <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl">{stats.profiles}</CardTitle>
+              <CardDescription>Profiles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                View and manage user profiles
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/roles">
+          <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl">{stats.roles}</CardTitle>
+              <CardDescription>Roles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Manage system roles and permissions
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/user-roles">
+          <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl">{stats.userRoles}</CardTitle>
+              <CardDescription>User Roles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Assign roles to users
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="rounded-lg border p-4">
         <h2 className="text-lg font-medium mb-2">About Admin Access</h2>
         <p className="text-sm text-muted-foreground mb-2">
-          Currently, all users have access to this admin dashboard. In the
-          future, role-based access control will be implemented to restrict
-          access to authorized administrators only.
+          Role-based access control is now implemented to restrict access to
+          authorized administrators. Use the Roles and User Roles sections to
+          manage permissions.
         </p>
-        <p className="text-sm text-muted-foreground">
-          To add role-based access control, we&apos;ll need to:
-        </p>
+        <p className="text-sm text-muted-foreground">Features available:</p>
         <ul className="list-disc pl-5 mt-2 text-sm text-muted-foreground">
-          <li>Add a &quot;role&quot; field to the user table</li>
-          <li>Implement middleware to check user roles</li>
-          <li>Create a role management interface</li>
+          <li>Create and manage roles with specific permissions</li>
+          <li>Assign roles to users</li>
+          <li>Manage user profiles with additional information</li>
         </ul>
       </div>
     </div>

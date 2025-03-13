@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, getUserByEmail } from "@/db/queries";
+import { createUser, getUserByEmail, listUsers } from "@/db/queries";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -14,6 +14,19 @@ const userCreateSchema = z.object({
 // Generate a UUID using native Node.js crypto
 function generateId() {
   return crypto.randomUUID();
+}
+
+export async function GET() {
+  try {
+    const users = await listUsers(100); // Get up to 100 users
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
