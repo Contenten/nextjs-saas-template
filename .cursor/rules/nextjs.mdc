@@ -39,3 +39,10 @@ function Page({ params }) {
 
 ```
 
+## Avoid Node.js Modules in Edge Runtime
+
+The code in Middleware and Edge API Routes should not use the feature from Node.js runtime.
+
+
+
+
