@@ -36,6 +36,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   Users
                 </a>
                 <a
+                  href="/admin/profiles"
+                  className="flex items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                  Profiles
+                </a>
+                <a
+                  href="/admin/roles"
+                  className="flex items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                  Roles
+                </a>
+                <a
+                  href="/admin/user-roles"
+                  className="flex items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                  User Roles
+                </a>
+                <a
                   href="/admin/sessions"
                   className="flex items-center rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                 >

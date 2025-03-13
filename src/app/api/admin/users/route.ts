@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, getUserByEmail, listUsers } from "@/db/queries";
+import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
+import { count } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -11,15 +13,25 @@ const userCreateSchema = z.object({
   image: z.string().nullable().optional(),
 });
 
-// Generate a UUID using native Node.js crypto
+// Generate a UUID
 function generateId() {
   return crypto.randomUUID();
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const users = await listUsers(100); // Get up to 100 users
-    return NextResponse.json(users);
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get("limit") || "10");
+    const offset = parseInt(url.searchParams.get("offset") || "0");
+
+    // Fetch users with pagination
+    const users = await db.select().from(user).limit(limit).offset(offset);
+
+    // Get total count for pagination
+    const totalCountResult = await db.select({ value: count() }).from(user);
+    const total = totalCountResult[0]?.value ?? 0;
+
+    return NextResponse.json({ users, total });
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -31,33 +43,30 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse and validate request body
     const body = await req.json();
+
+    // Validate request body
     const validatedData = userCreateSchema.parse(body);
 
-    // Check if user with email already exists
-    const existingUser = await getUserByEmail(validatedData.email);
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 },
-      );
-    }
-
-    // Create user with validated data
+    // Generate ID and timestamps
+    const userId = generateId();
     const now = new Date();
-    const user = await createUser({
-      id: generateId(),
-      name: validatedData.name,
-      email: validatedData.email,
-      emailVerified: validatedData.emailVerified,
-      image: validatedData.image || null,
-      createdAt: now,
-      updatedAt: now,
-    });
 
-    return NextResponse.json(user, { status: 201 });
+    // Create user
+    const result = await db
+      .insert(user)
+      .values({
+        id: userId,
+        name: validatedData.name,
+        email: validatedData.email,
+        emailVerified: validatedData.emailVerified,
+        image: validatedData.image,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+
+    return NextResponse.json(result[0]);
   } catch (error) {
     console.error("Error creating user:", error);
 

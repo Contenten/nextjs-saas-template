@@ -1,7 +1,6 @@
-import { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { db } from "@/db/drizzle";
-import { user } from "@/db/schema";
 import { Button } from "@/registry/new-york/ui/button";
 import {
   Table,
@@ -12,28 +11,148 @@ import {
   TableRow,
 } from "@/registry/new-york/ui/table";
 import { formatDistanceToNow } from "date-fns";
-import { count } from "drizzle-orm";
+import React from "react";
+import { useState, useEffect } from "react";
+import { Checkbox } from "@/registry/new-york/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/registry/new-york/ui/alert-dialog";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Users | Admin Dashboard",
-  description: "Manage user accounts",
-};
-
-export default async function UsersAdminPage({
+export default function UsersAdminPage({
   searchParams,
 }: {
   searchParams: { page?: string; limit?: string };
 }) {
-  const params = await searchParams;
-  const page = Number(params.page) || 1;
-  const limit = Number(params.limit) || 10;
-  const offset = (page - 1) * limit;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [users, setUsers] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const users = await db.select().from(user).limit(limit).offset(offset);
-  const totalCountResult = await db.select({ value: count() }).from(user);
-  const totalCount = totalCountResult[0]?.value ?? 0;
+  // @ts-expect-error
+  const params = React.use<any>(searchParams);
+
+  useEffect(() => {
+    // Initialize page and limit from search params
+    const pageParam = params.page ? parseInt(params.page) : 1;
+    const limitParam = params.limit ? parseInt(params.limit) : 10;
+
+    setPage(pageParam);
+    setLimit(limitParam);
+
+    fetchUsers(pageParam, limitParam);
+  }, [searchParams]);
+
+  const fetchUsers = async (page: number, limit: number) => {
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * limit;
+      const response = await fetch(
+        `/api/admin/users?limit=${limit}&offset=${offset}`,
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers(data.users || []);
+        setTotalCount(data.total || 0);
+      } else {
+        console.error("Failed to fetch users:", data.error);
+        toast.error("Failed to fetch users");
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Error fetching users");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("User deleted successfully");
+        // Refresh the user list
+        fetchUsers(page, limit);
+      } else {
+        const data = await response.json();
+        toast.error(`Failed to delete user: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Error deleting user");
+    }
+
+    setUserToDelete(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedUsers.length === 0) {
+      toast.error("No users selected");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/users/batch", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds: selectedUsers }),
+      });
+
+      if (response.ok) {
+        toast.success(`Successfully deleted ${selectedUsers.length} users`);
+        setSelectedUsers([]);
+        fetchUsers(page, limit);
+      } else {
+        const data = await response.json();
+        toast.error(`Failed to delete users: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error batch deleting users:", error);
+      toast.error("Error deleting users");
+    }
+
+    setBatchDeleteDialogOpen(false);
+  };
+
+  const handleSelectUser = (userId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+    }
+  };
+
+  const handleSelectAll = (isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedUsers(users.map((user) => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
 
   const totalPages = Math.ceil(totalCount / limit);
+  const offset = (page - 1) * limit;
 
   return (
     <div className="space-y-6">
@@ -44,15 +163,57 @@ export default async function UsersAdminPage({
             Manage user accounts in the database.
           </p>
         </div>
-        <Link href="/admin/users/create">
-          <Button>Create User</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {selectedUsers.length > 0 && (
+            <AlertDialog
+              open={batchDeleteDialogOpen}
+              onOpenChange={setBatchDeleteDialogOpen}
+            >
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  Delete Selected ({selectedUsers.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Selected Users</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete {selectedUsers.length}{" "}
+                    users? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBatchDelete}
+                    className="bg-destructive text-destructive-foreground"
+                  >
+                    Delete Users
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Link href="/admin/users/create">
+            <Button>Create User</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  onCheckedChange={(checked) =>
+                    handleSelectAll(checked === true)
+                  }
+                  checked={
+                    selectedUsers.length === users.length && users.length > 0
+                  }
+                />
+              </TableHead>
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
@@ -64,6 +225,14 @@ export default async function UsersAdminPage({
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
+                <TableCell>
+                  <Checkbox
+                    onCheckedChange={(checked) =>
+                      handleSelectUser(user.id, checked === true)
+                    }
+                    checked={selectedUsers.includes(user.id)}
+                  />
+                </TableCell>
                 <TableCell className="font-mono text-xs">
                   {user.id.substring(0, 8)}...
                 </TableCell>
@@ -99,6 +268,45 @@ export default async function UsersAdminPage({
                         Edit
                       </Button>
                     </Link>
+                    <AlertDialog
+                      open={deleteDialogOpen && userToDelete === user.id}
+                      onOpenChange={(open) => {
+                        setDeleteDialogOpen(open);
+                        if (!open) setUserToDelete(null);
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => {
+                            setUserToDelete(user.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete User</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this user? This
+                            action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="bg-destructive text-destructive-foreground"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>

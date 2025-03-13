@@ -72,8 +72,22 @@ export default function CreateUserRolePage() {
         if (!rolesResponse.ok) throw new Error("Failed to fetch roles");
         const rolesData = await rolesResponse.json();
 
-        setUsers(usersData);
-        setRoles(rolesData);
+        // Check if usersData is an array, otherwise try to extract the array from the response
+        const usersArray = Array.isArray(usersData)
+          ? usersData
+          : usersData.data || usersData.users || [];
+
+        // Check if rolesData is an array, otherwise try to extract the array from the response
+        const rolesArray = Array.isArray(rolesData)
+          ? rolesData
+          : rolesData.data || rolesData.roles || [];
+
+        setUsers(usersArray);
+        setRoles(rolesArray);
+
+        // Log for debugging
+        console.log("Users data structure:", usersData);
+        console.log("Processed users array:", usersArray);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load users or roles");

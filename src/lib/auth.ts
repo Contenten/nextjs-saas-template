@@ -18,9 +18,39 @@ import { db } from "@/db/drizzle";
 import { reactInvitationEmail } from "@/lib/email/invitation";
 import { reactResetPasswordEmail } from "@/lib/email/reset-password";
 import { resend } from "@/lib/email/resend";
+import { assignRoleToUser, getRoleByName } from "@/db/queries";
 
 const from = process.env.BETTER_AUTH_EMAIL || "delivered@wuchengwei.com";
 const to = process.env.TEST_EMAIL || "";
+
+// Let's create an alternative approach that doesn't rely on hooks
+// We'll create a function to ensure all users have a role
+async function ensureUserHasRole(userId: string): Promise<void> {
+  try {
+    // Get the "User" role
+    const userRole = await getRoleByName("User");
+    if (!userRole) {
+      console.error("User role not found in the database");
+      return;
+    }
+
+    // Assign the "User" role to the user if they don't already have it
+    await assignRoleToUser({
+      userId,
+      roleId: userRole.id,
+      createdAt: new Date(),
+    });
+    console.log(`Assigned User role to user ${userId}`);
+  } catch (error) {
+    console.error("Error assigning role to user:", error);
+  }
+}
+
+// Define a type for the signup params
+interface SignupParams {
+  user?: { id: string; [key: string]: any };
+  [key: string]: any;
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
@@ -47,6 +77,15 @@ export const auth = betterAuth({
           resetLink: url,
         }),
       });
+    },
+    // Add an onSignup handler to assign roles
+    async onSignup(params: SignupParams) {
+      const { user } = params;
+      // Assign the User role
+      if (user?.id) {
+        await ensureUserHasRole(user.id);
+      }
+      return params;
     },
   },
   plugins: [
