@@ -30,6 +30,7 @@ export interface UserMenuProps {
     createdAt: Date;
     updatedAt: Date;
     image?: string | null | undefined;
+    role?: string;
   };
 }
 
@@ -83,6 +84,9 @@ export function UserNav({ user }: UserMenuProps) {
     window.location.href = "/";
   };
 
+  // Check if user has admin role
+  const isAdmin = user?.role === "admin";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -111,6 +115,11 @@ export function UserNav({ user }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin">Admin</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href="/profile">
               Profile
