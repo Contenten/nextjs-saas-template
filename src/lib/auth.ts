@@ -11,6 +11,7 @@ import {
   oAuthProxy,
   openAPI,
   oidcProvider,
+  genericOAuth,
 } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 
@@ -40,7 +41,7 @@ async function ensureUserHasRole(userId: string): Promise<void> {
       roleId: userRole.id,
       createdAt: new Date(),
     });
-    console.log(`Assigned User role to user ${userId}`);
+    // console.log(`Assigned User role to user ${userId}`);
   } catch (error) {
     console.error("Error assigning role to user:", error);
   }
@@ -62,7 +63,7 @@ export const auth = betterAuth({
     //     subject: "Verify your email address",
     //     html: `<a href="${url}">Verify your email address</a>`,
     //   });
-    //   console.log(res, user.email);
+    // console.log(res, user.email);
     // },
   },
   emailAndPassword: {
@@ -96,26 +97,32 @@ export const auth = betterAuth({
     github: {
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/github`,
     },
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/google`,
     },
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID || "",
       clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/discord`,
     },
     microsoft: {
       clientId: process.env.MICROSOFT_CLIENT_ID || "",
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/microsoft`,
     },
     twitch: {
       clientId: process.env.TWITCH_CLIENT_ID || "",
       clientSecret: process.env.TWITCH_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/twitch`,
     },
     twitter: {
       clientId: process.env.TWITTER_CLIENT_ID || "",
       clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
+      redirectURI: `${process.env.BETTER_AUTH_URL || ""}/api/auth/callback/twitter`,
     },
   },
   plugins: [
@@ -189,5 +196,67 @@ export const auth = betterAuth({
     // 		],
     // 	},
     // }),
+    genericOAuth({
+      config: [
+        // Local OAuth provider for testing
+        {
+          providerId: "local-oauth",
+          clientId: "local-client-id",
+          clientSecret: "local-client-secret",
+          discoveryUrl:
+            "http://localhost:3333/oauth/.well-known/openid-configuration",
+          authorizationUrl: "http://localhost:3333/oauth/authorize",
+          tokenUrl: "http://localhost:3333/oauth/token",
+          userInfoUrl: "http://localhost:3333/oauth/userinfo",
+          scopes: ["openid", "profile", "email"],
+          redirectURI: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/api/auth/callback/local-oauth`,
+          // No discovery URL needed for local testing
+          getUserInfo: async (tokenInfo) => {
+            // console.log('Calling userinfo with token:', tokenInfo);
+
+            try {
+              const response = await fetch(
+                "http://localhost:3333/oauth/userinfo",
+                {
+                  headers: {
+                    Authorization: `${tokenInfo.tokenType} ${tokenInfo.accessToken}`,
+                  },
+                },
+              );
+
+              // console.log('Userinfo response status:', response.status);
+
+              if (!response.ok) {
+                console.error(
+                  "Error fetching user info:",
+                  response.status,
+                  response.statusText,
+                );
+                const errorData = await response.json();
+                console.error("Error details:", errorData);
+                throw new Error(
+                  `Failed to fetch user info: ${response.status} ${response.statusText}`,
+                );
+              }
+
+              const data = await response.json();
+              // console.log('Userinfo data:', data);
+
+              return {
+                id: data.sub,
+                email: data.email,
+                emailVerified: data.email_verified,
+                name: data.name,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+            } catch (error) {
+              console.error("Exception in getUserInfo:", error);
+              throw error;
+            }
+          },
+        },
+      ],
+    }),
   ],
 });

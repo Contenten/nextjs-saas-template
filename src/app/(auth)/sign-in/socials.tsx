@@ -9,11 +9,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/registry/new-york/ui/tooltip";
+import { LocalOAuthButton } from "@/components/local-oauth-button";
 
 export default function Socials() {
+  const isLocal = !!process.env.NEXT_DEV_EMAIL;
+
   return (
     <div className="grid grid-cols-4 gap-2">
       <TooltipProvider>
+        {isLocal && <LocalOAuthButton />}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

@@ -29,6 +29,7 @@ const publicRoutes = [
   "/reset-password",
   "/api/auth/sign-up",
   "/api/auth/sign-in",
+  "/api/auth/callback",
   "/unauthorized",
   "/api/auth/check-session", // New API route for session checking
 ];
@@ -71,13 +72,13 @@ export async function middleware(request: NextRequest) {
       (route) => pathname === route || pathname.startsWith(route + "/"),
     )
   ) {
-    console.log("Public route detected:", pathname);
+    // console.log("Public route detected:", pathname);
     return NextResponse.next();
   }
 
   // Get session token from cookie
   const authCookie = request.cookies.get("better-auth.session_token")?.value;
-  console.log("Auth cookie:", authCookie);
+  // console.log("Auth cookie:", authCookie);
   if (!authCookie) {
     // Redirect to sign-in page if not authenticated
     return NextResponse.redirect(new URL("/sign-in", request.url));

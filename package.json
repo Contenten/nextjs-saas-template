@@ -29,7 +29,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "prepare": "node ./scripts/install-husky.js",
-    "release": "changeset version"
+    "release": "changeset version",
+    "mock:oauth": "node scripts/mock-oauth-server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.2",

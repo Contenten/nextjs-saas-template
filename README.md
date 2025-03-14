@@ -9,8 +9,35 @@ You can use this template as a starting point for your next project.
 - [Tailwind CSS](https://tailwindcss.com/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [E2E Testing with Playwright](https://playwright.dev/)
+- [Better-Auth](https://better-auth.com/) for authentication
 
 Biome is used for linting and formatting locally.
+
+## Authentication with Better-Auth
+
+This template includes a complete authentication system using Better-Auth, including:
+
+- Email/password authentication
+- Social login with multiple providers
+- User roles and permissions
+- Profile management
+
+### Local OAuth Testing
+
+For development and testing purposes, this template includes a mock OAuth server that allows you to test the OAuth flow locally without relying on external providers:
+
+1. Start the mock OAuth server:
+   ```bash
+   npm run mock:oauth
+   ```
+
+2. Use the "Sign In with Local OAuth" button on the sign-in page
+
+3. Test credentials:
+   - Regular User: `test@example.com` / `password`
+   - Admin User: `admin@example.com` / `password`
+
+For more details on the mock OAuth server, see the [scripts/README.md](scripts/README.md) file.
 
 ## Deploy to multiple platforms
 
