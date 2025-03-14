@@ -17,6 +17,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
@@ -37,11 +38,13 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
                 await signIn.social({
                   provider: "discord",
+                  callbackURL: "/dashboard",
                 });
               }}
             >
@@ -56,6 +59,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
@@ -99,6 +103,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
@@ -129,6 +134,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
@@ -159,6 +165,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
@@ -189,6 +196,7 @@ export default function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className="gap-2"
               onClick={async () => {
