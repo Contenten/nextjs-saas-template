@@ -14,6 +14,10 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { count } from "drizzle-orm";
 import { eq } from "drizzle-orm/expressions";
+import DeleteButton from "./delete-button";
+import EditButton from "./edit-button";
+import ViewButton from "./view-button";
+import { getCurrentUserWithRoles } from "../../actions";
 
 export const metadata: Metadata = {
   title: "User Roles | Admin Dashboard",
@@ -30,13 +34,21 @@ export default async function UserRolesAdminPage({
   const limit = Number(params.limit) || 10;
   const offset = (page - 1) * limit;
 
+  // Get the current user with roles
+  const currentUser = await getCurrentUserWithRoles();
+  if (!currentUser) {
+    return <div>Authentication required</div>;
+  }
+
   // Join with user and role tables to get related data
   const userRoles = await db
     .select({
       userRole: user_role,
       userName: user.name,
       userEmail: user.email,
+      userId: user.id,
       roleName: role.name,
+      roleId: role.id,
       roleDescription: role.description,
     })
     .from(user_role)
@@ -49,6 +61,14 @@ export default async function UserRolesAdminPage({
   const totalCount = totalCountResult[0]?.value ?? 0;
 
   const totalPages = Math.ceil(totalCount / limit);
+
+  // Check which roles are admin roles
+  const adminRoleIds = await db
+    .select({ id: role.id })
+    .from(role)
+    .where(eq(role.name, "Admin"));
+
+  const adminRoleIdSet = new Set(adminRoleIds.map((item) => item.id || ""));
 
   return (
     <div className="space-y-6">
@@ -76,54 +96,67 @@ export default async function UserRolesAdminPage({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userRoles.map((item) => (
-              <TableRow key={item.userRole.id}>
-                <TableCell className="font-mono text-xs">
-                  {item.userRole.id.substring(0, 8)}...
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{item.userName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.userEmail}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{item.roleName}</div>
-                    {item.roleDescription && (
-                      <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
-                        {item.roleDescription}
+            {userRoles.map((item) => {
+              // Determine if this role is an admin role
+              const isAdminRole = !!(
+                item.roleId && adminRoleIdSet.has(item.roleId)
+              );
+
+              return (
+                <TableRow key={item.userRole.id}>
+                  <TableCell className="font-mono text-xs">
+                    {item.userRole.id.substring(0, 8)}...
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{item.userName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.userEmail}
                       </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {item.userRole.createdAt
-                    ? formatDistanceToNow(new Date(item.userRole.createdAt), {
-                        addSuffix: true,
-                      })
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/admin/user-roles/${item.userRole.id}`}>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                    <Link
-                      href={`/api/admin/user-roles/${item.userRole.id}/delete`}
-                    >
-                      <Button variant="destructive" size="sm">
-                        Remove
-                      </Button>
-                    </Link>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{item.roleName}</div>
+                      {item.roleDescription && (
+                        <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
+                          {item.roleDescription}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {item.userRole.createdAt
+                      ? formatDistanceToNow(new Date(item.userRole.createdAt), {
+                          addSuffix: true,
+                        })
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <ViewButton id={item.userRole.id} />
+                      <EditButton
+                        id={item.userRole.id}
+                        roleName={item.roleName || ""}
+                        isAdmin={isAdminRole}
+                        currentUserIsAdmin={currentUser.isAdmin}
+                        currentUserId={currentUser.id}
+                        userId={item.userId || ""}
+                      />
+                      <DeleteButton
+                        id={item.userRole.id}
+                        roleName={item.roleName || ""}
+                        userName={item.userName || ""}
+                        isAdmin={isAdminRole}
+                        currentUserIsAdmin={currentUser.isAdmin}
+                        currentUserId={currentUser.id}
+                        userId={item.userId || ""}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

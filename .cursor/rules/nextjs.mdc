@@ -44,5 +44,7 @@ function Page({ params }) {
 The code in Middleware and Edge API Routes should not use the feature from Node.js runtime.
 
 
+## Don't use client-side event handlers (like onClick) in server components
+
 
 
