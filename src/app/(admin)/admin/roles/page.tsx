@@ -13,11 +13,51 @@ import {
 } from "@/registry/new-york/ui/table";
 import { formatDistanceToNow } from "date-fns";
 import { count } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm/expressions";
+import { DeleteRoleButton } from "./components/delete-role-button";
 
 export const metadata: Metadata = {
   title: "Roles | Admin Dashboard",
   description: "Manage system roles",
 };
+
+// Define default/core roles that cannot be deleted or edited
+const CORE_ROLES = ["admin", "user", "moderator"];
+
+// Server action to delete a role
+async function deleteRole(formData: FormData) {
+  "use server";
+
+  const roleId = formData.get("roleId") as string;
+
+  try {
+    // Check if role is a core role
+    if (CORE_ROLES.includes(roleId)) {
+      console.error("Cannot delete a core system role");
+      return; // Return void to match the expected type
+    }
+
+    // Check if role exists
+    const existingRole = await db
+      .select()
+      .from(role)
+      .where(eq(role.id, roleId));
+
+    if (!existingRole.length) {
+      console.error("Role not found");
+      return;
+    }
+
+    // Delete the role
+    await db.delete(role).where(eq(role.id, roleId));
+
+    // Revalidate the current path to refresh the data
+    revalidatePath("/admin/roles");
+  } catch (error) {
+    console.error("Error deleting role:", error);
+  }
+}
 
 export default async function RolesAdminPage({
   searchParams,
@@ -62,76 +102,100 @@ export default async function RolesAdminPage({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles.map((role) => (
-              <TableRow key={role.id}>
-                <TableCell className="font-mono text-xs">{role.id}</TableCell>
-                <TableCell className="font-medium">{role.name}</TableCell>
-                <TableCell>
-                  {role.description ? (
-                    <span className="line-clamp-2 max-w-[200px] text-sm">
-                      {role.description}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      No description
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {Object.keys(role.permissions as Record<string, boolean>)
-                    .length > 0 ? (
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {Object.entries(
-                        role.permissions as Record<string, boolean>,
-                      )
-                        .filter(([_, value]) => value)
-                        .slice(0, 3)
-                        .map(([key]) => (
-                          <span
-                            key={key}
-                            className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                          >
-                            {key}
+            {roles.map((role) => {
+              const isCoreRole = CORE_ROLES.includes(role.id);
+
+              return (
+                <TableRow key={role.id}>
+                  <TableCell className="font-mono text-xs">{role.id}</TableCell>
+                  <TableCell className="font-medium">{role.name}</TableCell>
+                  <TableCell>
+                    {role.description ? (
+                      <span className="line-clamp-2 max-w-[200px] text-sm">
+                        {role.description}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        No description
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {Object.keys(role.permissions as Record<string, boolean>)
+                      .length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {Object.entries(
+                          role.permissions as Record<string, boolean>,
+                        )
+                          .filter(([_, value]) => value)
+                          .slice(0, 3)
+                          .map(([key]) => (
+                            <span
+                              key={key}
+                              className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
+                            >
+                              {key}
+                            </span>
+                          ))}
+                        {Object.keys(
+                          role.permissions as Record<string, boolean>,
+                        ).length > 3 && (
+                          <span className="text-xs text-muted-foreground">
+                            +
+                            {Object.keys(
+                              role.permissions as Record<string, boolean>,
+                            ).length - 3}{" "}
+                            more
                           </span>
-                        ))}
-                      {Object.keys(role.permissions as Record<string, boolean>)
-                        .length > 3 && (
-                        <span className="text-xs text-muted-foreground">
-                          +
-                          {Object.keys(
-                            role.permissions as Record<string, boolean>,
-                          ).length - 3}{" "}
-                          more
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        None
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {role.createdAt
+                      ? formatDistanceToNow(new Date(role.createdAt), {
+                          addSuffix: true,
+                        })
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/admin/roles/${role.id}`}>
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      </Link>
+
+                      {!isCoreRole && (
+                        <>
+                          <Link href={`/admin/roles/${role.id}/edit`}>
+                            <Button variant="outline" size="sm">
+                              Edit
+                            </Button>
+                          </Link>
+
+                          <DeleteRoleButton
+                            roleId={role.id}
+                            roleName={role.name}
+                            deleteAction={deleteRole}
+                          />
+                        </>
+                      )}
+
+                      {isCoreRole && (
+                        <span className="text-xs text-muted-foreground ml-2">
+                          (Core role - cannot be modified)
                         </span>
                       )}
                     </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">None</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {role.createdAt
-                    ? formatDistanceToNow(new Date(role.createdAt), {
-                        addSuffix: true,
-                      })
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/admin/roles/${role.id}`}>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                    <Link href={`/admin/roles/${role.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                    </Link>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
