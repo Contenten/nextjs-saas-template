@@ -42,9 +42,12 @@ export async function GET(
 
 export async function POST(request: Request) {
   try {
+    console.log("POST request to /api/admin/roles");
     const body = await request.json();
+    console.log("Request body:", body);
 
     const validatedRole = roleSchema.parse(body);
+    console.log("Validated role:", validatedRole);
 
     // Check if role with same ID already exists
     const existingRole = await db
@@ -53,6 +56,7 @@ export async function POST(request: Request) {
       .where(eq(role.id, validatedRole.id));
 
     if (existingRole.length) {
+      console.log("Role with ID already exists:", validatedRole.id);
       return NextResponse.json(
         { error: "Role with this ID already exists" },
         { status: 409 },
@@ -60,6 +64,7 @@ export async function POST(request: Request) {
     }
 
     // Insert new role
+    console.log("Inserting new role:", validatedRole);
     const result = await db.insert(role).values({
       id: validatedRole.id,
       name: validatedRole.name,
@@ -68,6 +73,7 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    console.log("Role created successfully");
 
     return NextResponse.json(
       { success: true, role: validatedRole },
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
     console.error("Error creating role:", error);
 
     if (error instanceof z.ZodError) {
+      console.error("Validation error:", error.errors);
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
         { status: 400 },

@@ -71,7 +71,7 @@ export default function RoleEditForm({ role }: { role: Role }) {
   // Add any custom permissions from the role that aren't in our predefined list
   Object.keys(rolePermissions).forEach((key) => {
     if (!defaultPermissions[key]) {
-      defaultPermissions[key] = rolePermissions[key];
+      defaultPermissions[key] = rolePermissions[key] || false;
     }
   });
 

@@ -44,6 +44,9 @@ const permissionProtectedRoutes: Record<string, string[]> = {
   "/api/roles/create": ["role:create"],
   "/api/roles/update": ["role:update"],
   "/api/roles/delete": ["role:delete"],
+  "/api/admin/roles": ["role:read", "role:create"],
+  "/api/admin/roles/create": ["role:create"],
+  "/api/admin/users": ["user:read", "user:create"],
 };
 
 // Routes that require specific roles (format: 'route': ['role1', 'role2'])
@@ -105,6 +108,15 @@ export async function middleware(request: NextRequest) {
   if (!isValid || !user) {
     // Invalid session or user not found
     return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // Check if user has Admin role - if so, allow access to all admin routes
+  const isAdmin = roles.some((role: Role) => role.name === "Admin");
+  if (
+    isAdmin &&
+    (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))
+  ) {
+    return NextResponse.next();
   }
 
   // Check permission-protected routes
