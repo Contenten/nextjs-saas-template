@@ -19,6 +19,10 @@ const sidebarNavItems = [
     href: "/settings/account",
   },
   {
+    title: "Social Providers",
+    href: "/settings/social-providers",
+  },
+  {
     title: "Appearance",
     href: "/settings/appearance",
   },
