@@ -28,6 +28,8 @@ const publicRoutes = [
   "/sign-up",
   "/forget-password",
   "/reset-password",
+  "/api/auth/forget-password",
+  "/api/auth/reset-password",
   "/api/auth/sign-up",
   "/api/auth/sign-in",
   "/api/auth/callback",
@@ -50,6 +52,7 @@ const oauthCallbackRoutes = [
 
 // Routes that require specific permissions (format: 'route': ['permission1', 'permission2'])
 const permissionProtectedRoutes: Record<string, string[]> = {
+  // /api/users/ZXpA3DjntENzfhH5bn5Yxegfsi6y4c9K/email
   "/api/users": ["user:read"],
   "/api/users/create": ["user:create"],
   "/api/users/update": ["user:update"],
