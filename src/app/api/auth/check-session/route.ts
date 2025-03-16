@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getSessionByToken, getUserById, getUserRoles } from "@/db/queries";
+import { getSessionByToken, getUserById, getUserRoles, assignRoleToUser, getRoleByName } from "@/db/queries";
 
 // Define runtime to use Node.js runtime
 export const runtime = "nodejs";
@@ -23,6 +23,39 @@ function verifySignature(
   } catch (error) {
     console.error("Error verifying signature:", error);
     return false;
+  }
+}
+
+/**
+ * Ensure a user has at least the basic User role
+ */
+async function ensureUserHasRole(userId: string): Promise<void> {
+  try {
+    // Get user roles
+    const userRoles = await getUserRoles(userId);
+
+    // If user already has roles, no need to assign
+    if (userRoles.length > 0) {
+      return;
+    }
+
+    // Get the "User" role
+    const userRole = await getRoleByName("User");
+    if (!userRole) {
+      console.error("User role not found in the database");
+      return;
+    }
+
+    // Assign the "User" role to the user
+    await assignRoleToUser({
+      userId,
+      roleId: userRole.id,
+      createdAt: new Date(),
+    });
+
+    console.log(`Assigned User role to user ${userId}`);
+  } catch (error) {
+    console.error("Error assigning role to user:", error);
   }
 }
 
@@ -76,7 +109,10 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get user roles
+    // Ensure user has a role (especially for OAuth users)
+    await ensureUserHasRole(user.id);
+
+    // Get user roles (after potentially assigning a role)
     const roles = await getUserRoles(user.id);
 
     // Return user and roles

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { assignRoleToUser, getRoleByName } from "@/db/queries";
 
 // Define types for the session data returned by the API
 interface Role {
@@ -34,6 +35,19 @@ const publicRoutes = [
   "/api/auth/check-session", // New API route for session checking
 ];
 
+// OAuth callback routes that need special handling
+const oauthCallbackRoutes = [
+  "/api/auth/callback/github",
+  "/api/auth/callback/google",
+  "/api/auth/callback/discord",
+  "/api/auth/callback/microsoft",
+  "/api/auth/callback/twitch",
+  "/api/auth/callback/twitter",
+  process.env.NODE_ENV === "development"
+    ? "/api/auth/callback/local-oauth"
+    : "",
+];
+
 // Routes that require specific permissions (format: 'route': ['permission1', 'permission2'])
 const permissionProtectedRoutes: Record<string, string[]> = {
   "/api/users": ["user:read"],
@@ -64,7 +78,36 @@ const roleProtectedRoutes: Record<string, string[]> = {
 };
 
 // User-specific routes (these are routes a user can access for their own data)
-const userSpecificRoutes: string[] = ["/api/profile", "/profile", "/settings"];
+const userSpecificRoutes: string[] = [
+  "/api/profile",
+  "/profile",
+  "/settings",
+  "/settings/account",
+  "/settings/appearance",
+  "/settings/social-providers",
+  "/settings/notifications",
+];
+
+// Function to ensure a user has a role
+async function ensureUserHasRole(userId: string): Promise<void> {
+  try {
+    // Get the "User" role
+    const userRole = await getRoleByName("User");
+    if (!userRole) {
+      console.error("User role not found in the database");
+      return;
+    }
+
+    // Assign the "User" role to the user if they don't already have it
+    await assignRoleToUser({
+      userId,
+      roleId: userRole.id,
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Error assigning role to user:", error);
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -77,6 +120,23 @@ export async function middleware(request: NextRequest) {
   ) {
     // console.log("Public route detected:", pathname);
     return NextResponse.next();
+  }
+
+  // Check if this is an OAuth callback route
+  const isOAuthCallback = oauthCallbackRoutes.some(
+    (route) => pathname === route,
+  );
+
+  // Special handling for OAuth callbacks - we'll let this pass through
+  // but we'll add a response handler to process post-authentication logic
+  if (isOAuthCallback) {
+    const response = NextResponse.next();
+
+    // After OAuth callback is processed, we'll check if a session was created
+    // If it was, we'll initialize middleware session for the response
+    response.headers.set("x-oauth-callback", "true");
+
+    return response;
   }
 
   // Get session token from cookie
@@ -108,6 +168,19 @@ export async function middleware(request: NextRequest) {
   if (!isValid || !user) {
     // Invalid session or user not found
     return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // If user doesn't have any roles, assign the User role
+  // This ensures that users authenticated via OAuth will get roles assigned
+  if (roles.length === 0 && user.id) {
+    try {
+      await ensureUserHasRole(user.id);
+      // After assigning the role, we should refresh the session data
+      // but this would add complexity to the middleware
+      // For now, the user will get the role on next request
+    } catch (error) {
+      console.error("Error assigning role in middleware:", error);
+    }
   }
 
   // Check if user has Admin role - if so, allow access to all admin routes
@@ -164,8 +237,16 @@ export async function middleware(request: NextRequest) {
 
   // Check user-specific routes (these are routes a user can access for their own data)
   if (userSpecificRoutes.some((route) => pathname.startsWith(route))) {
-    // Extract user ID from the URL if present (e.g., /profile/123)
+    // Split the current route
     const urlParts = pathname.split("/");
+
+    // For /settings/* routes, users should always have access to their own settings
+    if (pathname.startsWith("/settings/")) {
+      // Allow the request to proceed as these are personal settings pages
+      return NextResponse.next();
+    }
+
+    // For other user-specific routes that might contain a user ID (e.g., /profile/123)
     const urlUserId = urlParts.length > 2 ? urlParts[2] : null;
 
     // If URL contains a user ID and it doesn't match the current user's ID
